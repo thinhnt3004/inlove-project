@@ -74,7 +74,9 @@ export default function ChatBubble() {
 
       ws.current.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        if (data.Action === "REACT") {
+        if (data.Action === "ERROR") {
+          alert("Lỗi từ máy chủ: " + data.Message);
+        } else if (data.Action === "REACT") {
           setMessages(prev => prev.map(m => m.MessageID === data.MessageID ? { ...m, Reaction: data.Reaction } : m));
         } else if (data.Action === "DELETE") {
           setMessages(prev => prev.map(m => m.MessageID === data.MessageID ? { ...m, IsDeleted: true } : m));
@@ -127,6 +129,11 @@ export default function ChatBubble() {
     e.preventDefault();
     if ((!inputMessage.trim() && !selectedFile) || !ws.current || !selectedSenderId || isUploading) return;
 
+    if (ws.current.readyState !== WebSocket.OPEN) {
+      alert("Mất kết nối mạng! Vui lòng tải lại trang web (F5) để thử lại.");
+      return;
+    }
+
     setIsUploading(true);
     let mediaUrl = null;
     let mediaType = null;
@@ -144,12 +151,12 @@ export default function ChatBubble() {
           mediaUrl = data.url;
           mediaType = data.mediaType;
         } else {
-          console.error("Upload failed");
+          alert("Lỗi tải file lên mạng!");
           setIsUploading(false);
           return;
         }
       } catch (err) {
-        console.error("Upload error", err);
+        alert("Lỗi tải file lên mạng!");
         setIsUploading(false);
         return;
       }

@@ -1,7 +1,11 @@
 from sqlalchemy import Column, String, Date, DateTime, ForeignKey, Unicode, Boolean
 from sqlalchemy.orm import relationship
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
+
+def vn_now():
+    return datetime.now(timezone(timedelta(hours=7))).replace(tzinfo=None)
+
 from .database import Base
 
 class Couple(Base):
@@ -13,7 +17,7 @@ class Couple(Base):
     YoutubeLink = Column(Unicode(500), nullable=True)
     AudioUrl = Column(String(500), nullable=True)
     Passcode = Column(String(4), nullable=True)
-    CreatedAt = Column(DateTime, default=datetime.now)
+    CreatedAt = Column(DateTime, default=vn_now)
 
     # Relationships
     users = relationship("User", back_populates="couple")
@@ -32,7 +36,7 @@ class User(Base):
     Mood = Column(Unicode(50), nullable=True)
     Gender = Column(String(20), nullable=True)
     DateOfBirth = Column(Date, nullable=True)
-    CreatedAt = Column(DateTime, default=datetime.now)
+    CreatedAt = Column(DateTime, default=vn_now)
 
     # Relationships
     couple = relationship("Couple", back_populates="users")
@@ -47,7 +51,7 @@ class Memory(Base):
     MemoryDate = Column(Date, nullable=False)
     Description = Column(Unicode, nullable=True) # NVARCHAR(MAX) maps to Unicode
     ImageUrl = Column(String(500), nullable=True)
-    CreatedAt = Column(DateTime, default=datetime.now)
+    CreatedAt = Column(DateTime, default=vn_now)
 
     # Relationships
     couple = relationship("Couple", back_populates="memories")
@@ -60,7 +64,7 @@ class Diary(Base):
     AuthorID = Column(String(36), ForeignKey("Users.UserID"), nullable=False)
     Content = Column(Unicode, nullable=False) # NVARCHAR(MAX) maps to Unicode
     Mood = Column(Unicode(50), nullable=True)
-    CreatedAt = Column(DateTime, default=datetime.now)
+    CreatedAt = Column(DateTime, default=vn_now)
 
     # Relationships
     couple = relationship("Couple", back_populates="diaries")
@@ -73,7 +77,7 @@ class RouletteOption(Base):
     CoupleID = Column(String(36), ForeignKey("Couples.CoupleID"), nullable=False)
     Category = Column(Unicode(100), nullable=False) # e.g. "Ăn gì hôm nay", "Đi đâu"
     Label = Column(Unicode(200), nullable=False)
-    CreatedAt = Column(DateTime, default=datetime.now)
+    CreatedAt = Column(DateTime, default=vn_now)
 
     # Relationships
     couple = relationship("Couple")
@@ -88,7 +92,7 @@ class TimeCapsule(Base):
     Passcode = Column(String(50), nullable=True)
     OpenDate = Column(DateTime, nullable=False)
     IsOpened = Column(Boolean, default=False)
-    CreatedAt = Column(DateTime, default=datetime.now)
+    CreatedAt = Column(DateTime, default=vn_now)
 
     # Relationships
     couple = relationship("Couple")
@@ -105,7 +109,7 @@ class Message(Base):
     ReplyToID = Column(String(36), ForeignKey("Messages.MessageID"), nullable=True)
     MediaUrl = Column(Unicode, nullable=True)
     MediaType = Column(Unicode(50), nullable=True)
-    CreatedAt = Column(DateTime, default=datetime.now)
+    CreatedAt = Column(DateTime, default=vn_now)
 
 class CountdownEvent(Base):
     __tablename__ = 'CountdownEvents'
@@ -114,7 +118,7 @@ class CountdownEvent(Base):
     CoupleID = Column(String(36), ForeignKey('Couples.CoupleID'), nullable=False)
     Title = Column(Unicode(200), nullable=False)
     TargetDate = Column(DateTime, nullable=False)
-    CreatedAt = Column(DateTime, default=datetime.utcnow)
+    CreatedAt = Column(DateTime, default=vn_now)
 
     couple = relationship('Couple')
 

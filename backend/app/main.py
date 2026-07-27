@@ -159,9 +159,17 @@ def get_music_list():
         files = os.listdir("music")
         # Chỉ lấy các file âm thanh
         music_files = [f for f in files if f.endswith(('.mp3', '.wav', '.ogg'))]
+        if not music_files:
+            return {"music_list": [
+                "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+                "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"
+            ]}
         return {"music_list": music_files}
     except Exception as e:
-        return {"music_list": []}
+        return {"music_list": [
+            "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+            "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"
+        ]}
 
 @app.get("/api/couple/{couple_id}/roulette", response_model=List[schemas.RouletteOptionResponse])
 def get_roulette_options(couple_id: str, db: Session = Depends(database.get_db)):
@@ -378,18 +386,23 @@ async def websocket_chat(websocket: WebSocket, couple_id: str, db: Session = Dep
                 media_type = data.get("MediaType")
                 
                 if sender_id and (content or media_url):
-                    new_msg = models.Message(
-                        CoupleID=couple_id,
-                        SenderID=sender_id,
-                        Content=content,
-                        ReplyToID=reply_to_id,
-                        MediaUrl=media_url,
-                        MediaType=media_type,
-                        IsDeleted=False
-                    )
-                    db.add(new_msg)
-                    db.commit()
-                    db.refresh(new_msg)
+                    try:
+                        new_msg = models.Message(
+                            CoupleID=couple_id,
+                            SenderID=sender_id,
+                            Content=content,
+                            ReplyToID=reply_to_id,
+                            MediaUrl=media_url,
+                            MediaType=media_type,
+                            IsDeleted=False
+                        )
+                        db.add(new_msg)
+                        db.commit()
+                        db.refresh(new_msg)
+                    except Exception as e:
+                        db.rollback()
+                        await manager.broadcast({"Action": "ERROR", "Message": str(e)}, couple_id)
+                        continue
                     
                     response = {
                         "Action": "SEND",

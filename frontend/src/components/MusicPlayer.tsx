@@ -46,7 +46,7 @@ export default function MusicPlayer() {
   
   const handleSelectSong = async (songName: string) => {
     if (!coupleData) return;
-    const url = `${API_BASE_URL}/music/${songName}`;
+    const url = songName.startsWith('http') ? songName : `${API_BASE_URL}/music/${songName}`;
     setAudioUrl(url);
     setShowPlaylist(false);
     setIsPlaying(true);

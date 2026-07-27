@@ -30,7 +30,7 @@ class User(Base):
     PasswordHash = Column(String(255), nullable=False)
     Nickname = Column(Unicode(100), nullable=True)
     AvatarUrl = Column(String(500), nullable=True)
-    Mood = Column(String(50), nullable=True)
+    Mood = Column(Unicode(50), nullable=True)
     Gender = Column(String(20), nullable=True)
     DateOfBirth = Column(Date, nullable=True)
     CreatedAt = Column(DateTime, default=datetime.now)

@@ -39,6 +39,14 @@ export default function ChatBubble() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
+  // Unread badge
+  const [unreadCount, setUnreadCount] = useState(0);
+  const isOpenRef = useRef(isOpen);
+  useEffect(() => {
+    isOpenRef.current = isOpen;
+    if (isOpen) setUnreadCount(0);
+  }, [isOpen]);
+
   const ws = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -54,8 +62,9 @@ export default function ChatBubble() {
     if (isOpen && coupleData && selectedSenderId) fetchMessages();
   }, [isOpen, coupleData, selectedSenderId]);
 
+  // Connect to WS regardless of isOpen to receive unread notifications
   useEffect(() => {
-    if (isOpen && coupleData && selectedSenderId) {
+    if (coupleData && selectedSenderId) {
       // Fix for both http and https (like localtunnel or vercel)
       const wsUrl = API_BASE_URL.replace(/^https/, 'wss').replace(/^http:/, 'ws:') + `/api/ws/chat/${coupleData.CoupleID}`;
       ws.current = new WebSocket(wsUrl);
@@ -69,12 +78,16 @@ export default function ChatBubble() {
         } else {
           // SEND or default
           setMessages(prev => [...prev, data as Message]);
+          // Increment unread count if chat is closed and it's not from me
+          if (!isOpenRef.current && data.SenderID !== selectedSenderId) {
+            setUnreadCount(prev => prev + 1);
+          }
         }
       };
 
       return () => ws.current?.close();
     }
-  }, [isOpen, coupleData, selectedSenderId]);
+  }, [coupleData, selectedSenderId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -178,6 +191,11 @@ export default function ChatBubble() {
           onClick={handleOpenChat}
           className="fixed bottom-24 right-4 z-50 bg-pink-500 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform hover:bg-pink-600 animate-bounce"
         >
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center animate-pulse">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
           <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>

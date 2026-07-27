@@ -240,7 +240,7 @@ export default function Home() {
               className="absolute top-16 right-[-10px] md:top-24 md:right-0 bg-white rounded-full w-8 h-8 md:w-10 md:h-10 flex items-center justify-center shadow-md border border-gray-100 cursor-pointer hover:scale-110 transition-transform z-10 text-lg md:text-2xl"
               title="Cập nhật cảm xúc"
             >
-              {mood1 || "💭"}
+              {mood1 || "❤️"}
             </div>
 
             <input type="file" ref={fileInput1Ref} className="hidden" accept="image/*" onChange={(e) => handleAvatarUpload(0, e)} />
@@ -293,7 +293,7 @@ export default function Home() {
               className="absolute top-16 right-[-10px] md:top-24 md:right-0 bg-white rounded-full w-8 h-8 md:w-10 md:h-10 flex items-center justify-center shadow-md border border-gray-100 cursor-pointer hover:scale-110 transition-transform z-10 text-lg md:text-2xl"
               title="Cảm xúc"
             >
-              {mood2 || "💭"}
+              {mood2 || "❤️"}
             </div>
 
             <input type="file" ref={fileInput2Ref} className="hidden" accept="image/*" onChange={(e) => handleAvatarUpload(1, e)} />
@@ -335,9 +335,13 @@ export default function Home() {
             <div className="flex items-center gap-2 bg-white/60 p-2 rounded-xl shadow-inner">
               <input 
                 type="date" 
-                value={loveStartDate.toISOString().split('T')[0]}
-                onChange={(e) => setLoveStartDate(new Date(e.target.value))}
-                className="p-2 rounded-lg bg-white border border-pink-200 focus:outline-none text-gray-700 dark:text-white"
+                value={new Date(loveStartDate.getTime() - loveStartDate.getTimezoneOffset() * 60000).toISOString().split('T')[0]}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    setLoveStartDate(new Date(`${e.target.value}T00:00:00`));
+                  }
+                }}
+                className="p-2 rounded-lg bg-white border border-pink-200 focus:outline-none text-gray-700"
               />
               <button onClick={handleUpdateDate} className="bg-pink-500 text-white px-4 py-2 rounded-lg font-bold shadow-md hover:bg-pink-600">Lưu</button>
             </div>

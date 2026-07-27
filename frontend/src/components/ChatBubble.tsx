@@ -62,20 +62,26 @@ export default function ChatBubble() {
     if (isOpen && coupleData && selectedSenderId) fetchMessages();
   }, [isOpen, coupleData, selectedSenderId]);
 
-  // Connect to WS regardless of isOpen to receive unread notifications
   useEffect(() => {
-    if (coupleData && selectedSenderId) {
+    let reconnectTimer: NodeJS.Timeout;
+    
+    const connectWs = () => {
+      if (!coupleData || !selectedSenderId) return;
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const host = window.location.host;
-      const wsUrl = API_BASE_URL 
+      let rawUrl = API_BASE_URL 
         ? API_BASE_URL.replace(/^https/, 'wss').replace(/^http:/, 'ws:') + `/api/ws/chat/${coupleData.CoupleID}`
         : `${protocol}//${host}/api/ws/chat/${coupleData.CoupleID}`;
+      
+      // Fix potential double slashes
+      const wsUrl = rawUrl.replace(/([^:]\/)\/+/g, "$1");
+
       ws.current = new WebSocket(wsUrl);
 
       ws.current.onmessage = (event) => {
         const data = JSON.parse(event.data);
         if (data.Action === "ERROR") {
-          alert("Lỗi từ máy chủ: " + data.Message);
+          console.error("Lỗi từ máy chủ: " + data.Message);
         } else if (data.Action === "REACT") {
           setMessages(prev => prev.map(m => m.MessageID === data.MessageID ? { ...m, Reaction: data.Reaction } : m));
         } else if (data.Action === "DELETE") {
@@ -90,8 +96,21 @@ export default function ChatBubble() {
         }
       };
 
-      return () => ws.current?.close();
-    }
+      ws.current.onclose = () => {
+        // Auto reconnect after 3 seconds
+        reconnectTimer = setTimeout(connectWs, 3000);
+      };
+    };
+
+    connectWs();
+
+    return () => {
+      clearTimeout(reconnectTimer);
+      if (ws.current) {
+        ws.current.onclose = null; // Prevent reconnect loop on unmount
+        ws.current.close();
+      }
+    };
   }, [coupleData, selectedSenderId]);
 
   useEffect(() => {

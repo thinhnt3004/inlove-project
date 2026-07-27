@@ -149,7 +149,7 @@ export default function ChatBubble() {
     if ((!inputMessage.trim() && !selectedFile) || !ws.current || !selectedSenderId || isUploading) return;
 
     if (ws.current.readyState !== WebSocket.OPEN) {
-      alert("Mất kết nối mạng! Vui lòng tải lại trang web (F5) để thử lại.");
+      console.warn("Mất kết nối mạng! Hệ thống đang tự động kết nối lại...");
       return;
     }
 

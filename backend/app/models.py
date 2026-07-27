@@ -111,7 +111,7 @@ class CountdownEvent(Base):
     __tablename__ = 'CountdownEvents'
 
     EventID = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    CoupleID = Column(String(36), ForeignKey('Couples.CoupleID'), nullable=False)False)
+    CoupleID = Column(String(36), ForeignKey('Couples.CoupleID'), nullable=False)
     Title = Column(Unicode(200), nullable=False)
     TargetDate = Column(DateTime, nullable=False)
     CreatedAt = Column(DateTime, default=datetime.utcnow)

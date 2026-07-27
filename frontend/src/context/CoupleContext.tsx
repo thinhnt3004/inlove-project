@@ -18,13 +18,6 @@ export const CoupleProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [coupleData, setCoupleData] = useState<any>(null);
 
-  useEffect(() => {
-    const savedPasscode = localStorage.getItem("couple_passcode");
-    if (savedPasscode) {
-      login(savedPasscode);
-    }
-  }, []);
-
   const login = async (code: string) => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/couple/login/${code}`);
@@ -49,10 +42,17 @@ export const CoupleProvider = ({ children }: { children: React.ReactNode }) => {
         localStorage.removeItem("couple_passcode");
         return { success: false, message: data.detail || "Sai mã PIN!" };
       }
-    } catch (err) {
+    } catch {
       return { success: false, message: "Không kết nối được tới máy chủ!" };
     }
   };
+
+  useEffect(() => {
+    const savedPasscode = localStorage.getItem("couple_passcode");
+    if (savedPasscode) {
+      login(savedPasscode);
+    }
+  }, []);
 
   const logout = () => {
     setIsLoggedIn(false);

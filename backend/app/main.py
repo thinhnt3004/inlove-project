@@ -9,13 +9,29 @@ from . import database, models, schemas
 import shutil
 import os
 import uuid
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+from dotenv import load_dotenv
 
-# Đảm bảo thư mục lưu ảnh và nhạc tồn tại
+load_dotenv()
+
+cloudinary.config(
+  cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME'),
+  api_key = os.environ.get('CLOUDINARY_API_KEY'),
+  api_secret = os.environ.get('CLOUDINARY_API_SECRET')
+)
+
+# Đảm bảo thư mục lưu ảnh và nhạc tồn tại (có thể không dùng nữa nhưng giữ lại để tránh lỗi)
 os.makedirs("uploads", exist_ok=True)
 os.makedirs("uploads/chat_media", exist_ok=True)
 os.makedirs("music", exist_ok=True)
 
+# Khởi tạo các bảng trong Database (nếu chưa có)
+models.Base.metadata.create_all(bind=database.engine)
+
 app = FastAPI(title="InLove Web API")
+
 
 # Cho phép Frontend gọi API không bị lỗi CORS
 app.add_middleware(
@@ -99,13 +115,13 @@ def update_audio(couple_id: str, data: schemas.CoupleAudioUpdate, db: Session = 
 
 @app.post("/api/upload")
 def upload_file(file: UploadFile = File(...)):
-    # Sinh tên file ngẫu nhiên để không bị trùng
-    file_name = f"{uuid.uuid4()}_{file.filename}"
-    file_path = f"uploads/{file_name}"
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-    # Trả về link để truy cập ảnh
-    return {"url": f"/{file_path}"}
+    try:
+        # Upload lên Cloudinary
+        result = cloudinary.uploader.upload(file.file, folder="inlove_uploads")
+        # Trả về link an toàn (HTTPS) từ Cloudinary
+        return {"url": result.get("secure_url")}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.put("/api/user/{user_id}/avatar")
 def update_avatar(user_id: str, data: schemas.AvatarUpdate, db: Session = Depends(database.get_db)):
@@ -413,19 +429,17 @@ async def websocket_chat(websocket: WebSocket, couple_id: str, db: Session = Dep
 @app.post("/api/chat/upload-media")
 async def upload_chat_media(file: UploadFile = File(...)):
     try:
-        ext = file.filename.split(".")[-1] if "." in file.filename else "bin"
-        filename = f"{uuid.uuid4()}.{ext}"
-        filepath = os.path.join("uploads", "chat_media", filename)
+        resource_type = "video" if file.content_type and file.content_type.startswith("video/") else "image"
         
-        with open(filepath, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-            
-        media_type = "video" if file.content_type and file.content_type.startswith("video/") else "image"
+        # Upload lên Cloudinary
+        result = cloudinary.uploader.upload(
+            file.file, 
+            folder="inlove_chat_media",
+            resource_type=resource_type
+        )
         
-        # Đường dẫn tĩnh để trả về Frontend
-        url = f"/uploads/chat_media/{filename}"
-        
-        return {"url": url, "mediaType": media_type}
+        url = result.get("secure_url")
+        return {"url": url, "mediaType": resource_type}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

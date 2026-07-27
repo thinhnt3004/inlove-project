@@ -1,7 +1,9 @@
 fastapi
 uvicorn
 sqlalchemy
-pyodbc
+psycopg2-binary
 pydantic-settings
 pydantic[email]
 python-multipart
+cloudinary
+python-dotenv

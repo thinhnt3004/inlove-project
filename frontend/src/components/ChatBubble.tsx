@@ -22,11 +22,11 @@ const EMOJIS = ["❤️", "👍", "😆", "😢", "😡"];
 
 export default function ChatBubble() {
   const { coupleData, isLoggedIn } = useCouple();
-  
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
-  
+
   const [selectedSenderId, setSelectedSenderId] = useState<string | null>(null);
   const [showAvatarSelection, setShowAvatarSelection] = useState(false);
 
@@ -34,7 +34,7 @@ export default function ChatBubble() {
   const [replyToMsg, setReplyToMsg] = useState<Message | null>(null);
   const [msgToDelete, setMsgToDelete] = useState<string | null>(null);
   const [activeActionMenu, setActiveActionMenu] = useState<string | null>(null);
-  
+
   // Media upload states
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -65,10 +65,13 @@ export default function ChatBubble() {
   // Connect to WS regardless of isOpen to receive unread notifications
   useEffect(() => {
     if (coupleData && selectedSenderId) {
-      // Fix for both http and https (like localtunnel or vercel)
-      const wsUrl = API_BASE_URL.replace(/^https/, 'wss').replace(/^http:/, 'ws:') + `/api/ws/chat/${coupleData.CoupleID}`;
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const host = window.location.host;
+      const wsUrl = API_BASE_URL 
+        ? API_BASE_URL.replace(/^https/, 'wss').replace(/^http:/, 'ws:') + `/api/ws/chat/${coupleData.CoupleID}`
+        : `${protocol}//${host}/api/ws/chat/${coupleData.CoupleID}`;
       ws.current = new WebSocket(wsUrl);
-      
+
       ws.current.onmessage = (event) => {
         const data = JSON.parse(event.data);
         if (data.Action === "REACT") {
@@ -160,7 +163,7 @@ export default function ChatBubble() {
       MediaUrl: mediaUrl,
       MediaType: mediaType
     }));
-    
+
     setInputMessage("");
     setReplyToMsg(null);
     setSelectedFile(null);
@@ -251,7 +254,7 @@ export default function ChatBubble() {
                     const isMe = msg.SenderID === selectedSenderId;
                     const sender = msg.SenderID === coupleData.users[0].UserID ? coupleData.users[0] : coupleData.users[1];
                     const repliedMsg = msg.ReplyToID ? messages.find(m => m.MessageID === msg.ReplyToID) : null;
-                    
+
                     return (
                       <div key={msg.MessageID || idx} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group relative`}>
                         {!isMe && (
@@ -266,11 +269,10 @@ export default function ChatBubble() {
                             </div>
                           )}
 
-                          <div 
+                          <div
                             onClick={() => !msg.IsDeleted && setActiveActionMenu(activeActionMenu === msg.MessageID ? null : msg.MessageID)}
-                            className={`relative rounded-2xl px-4 py-2 shadow-sm ${!msg.IsDeleted ? 'cursor-pointer hover:opacity-95' : ''} ${
-                            isMe ? 'bg-pink-500 text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none border border-gray-100'
-                          }`}>
+                            className={`relative rounded-2xl px-4 py-2 shadow-sm ${!msg.IsDeleted ? 'cursor-pointer hover:opacity-95' : ''} ${isMe ? 'bg-pink-500 text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none border border-gray-100'
+                              }`}>
                             {msg.IsDeleted ? (
                               <p className="text-sm italic opacity-70">Tin nhắn đã bị thu hồi</p>
                             ) : (
@@ -371,8 +373,8 @@ export default function ChatBubble() {
                   disabled={isUploading}
                   className="flex-1 bg-gray-100 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 disabled:opacity-50"
                 />
-                
-                <button 
+
+                <button
                   type="submit"
                   disabled={(!inputMessage.trim() && !selectedFile) || isUploading}
                   className="bg-pink-500 text-white w-10 h-10 rounded-full flex shrink-0 items-center justify-center hover:bg-pink-600 disabled:opacity-50 disabled:hover:bg-pink-500 transition-colors shadow-sm"

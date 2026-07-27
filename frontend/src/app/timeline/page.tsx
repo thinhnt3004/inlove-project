@@ -64,6 +64,7 @@ export default function TimelinePage() {
           if (url) {
             url = url.replace('http://127.0.0.1:8080', '');
             if (url.startsWith('/uploads')) url = API_BASE_URL + url;
+            if (!url.startsWith('http')) url = API_BASE_URL + url;
           }
           return { ...m, ImageUrl: url };
         });
@@ -138,7 +139,7 @@ export default function TimelinePage() {
       if (res.ok) {
         let newMemory = await res.json();
         if (newMemory.ImageUrl && newMemory.ImageUrl.startsWith('/uploads')) {
-          newMemory.ImageUrl = API_BASE_URL + newMemory.ImageUrl;
+          newMemory.ImageUrl = newMemory.ImageUrl.startsWith('http') ? newMemory.ImageUrl : API_BASE_URL + newMemory.ImageUrl;
         }
         // Insert and sort
         const newMemories = [...memories, newMemory].sort((a, b) => new Date(b.MemoryDate).getTime() - new Date(a.MemoryDate).getTime());

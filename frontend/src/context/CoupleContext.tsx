@@ -27,7 +27,7 @@ export const CoupleProvider = ({ children }: { children: React.ReactNode }) => {
           data.users = data.users.map((u: any) => {
             if (u.AvatarUrl) {
               u.AvatarUrl = u.AvatarUrl.replace('http://127.0.0.1:8080', '');
-              if (u.AvatarUrl.startsWith('/uploads')) {
+              if (u.AvatarUrl && !u.AvatarUrl.startsWith('http')) {
                 u.AvatarUrl = API_BASE_URL + u.AvatarUrl;
               }
             }

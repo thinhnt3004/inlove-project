@@ -177,7 +177,8 @@ export default function Home() {
         
         // Cập nhật context
         const newUsers = [...coupleData.users];
-        newUsers[userIndex] = { ...newUsers[userIndex], AvatarUrl: API_BASE_URL + uploadData.url };
+        const newAvatarUrl = uploadData.url.startsWith('http') ? uploadData.url : API_BASE_URL + uploadData.url;
+        newUsers[userIndex] = { ...newUsers[userIndex], AvatarUrl: newAvatarUrl };
         updateCoupleData({ ...coupleData, users: newUsers });
       }
     } catch (err) {
